@@ -9,7 +9,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/golang/crypto/bcrypt"
+	"golang.org/x/crypto/bcrypt"
 	"os"
 	"time"
 )

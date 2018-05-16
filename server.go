@@ -11,13 +11,17 @@ import (
 	Gin "github.com/gin-gonic/gin"
 	"github.com/xoxo/crm-x/routes"
 	. "github.com/xoxo/crm-x/Config"
+	"github.com/xoxo/crm-x/util/logger"
 )
+
+
+
 
 func main() {
 	// load config from file
 	configor.Load(&Config, ".env.yml")
 	// fmt.Printf("config: %#v\n\n\n", Config)
-
+	
 	// init path
 	InitPath()
 
@@ -59,7 +63,7 @@ func startGracefulShutdown(engine *Gin.Engine)  {
 	go func() {
 		// service connections
 		if err := srv.ListenAndServe(); err != nil {
-			Logger.Info(fmt.Sprintf("listen: %s\n", err))
+			logger.Info(fmt.Sprintf("listen: %s\n", err))
 		}
 	}()
 
@@ -68,18 +72,18 @@ func startGracefulShutdown(engine *Gin.Engine)  {
 	quit := make(chan os.Signal)
 	signal.Notify(quit, os.Interrupt)
 	<-quit
-	Logger.Info("Shutdown Server ...")
+	logger.Info("Shutdown Server ...")
 
 	// Recycle
 	clearAll()
-	Logger.Info("------------------    Recycle   ------------------")
+	logger.Info("------------------    Recycle   ------------------")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		Logger.Info(fmt.Sprintf("Server Shutdown: %s\n", err))
+		logger.Info(fmt.Sprintf("Server Shutdown: %s\n", err))
 	}
-	Logger.Info("------------------Server exiting------------------")
+	logger.Info("------------------Server exiting------------------")
 }
 
 func clearAll()  {

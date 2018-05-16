@@ -13,13 +13,19 @@
 
  import(
 	Gin "github.com/gin-gonic/gin"
+	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo"
+	// "github.com/parnurzeal/gorequest"
+	
  )
 
  func SetupWebRouter(router *Gin.Engine)  {
 	// Ping test
 	router.LoadHTMLGlob("static/templates/*")
 
-	router.GET("/", func(c *Gin.Context)  {
+
+	_ = DubboController.SetupDubbo(router)
+
+	router.GET("/test", func(c *Gin.Context)  {
 		c.HTML(200, "index.tmpl", Gin.H{
 			"title": "Go-Crazy",
 			"msg": "Welcome to Go-Crazy!",

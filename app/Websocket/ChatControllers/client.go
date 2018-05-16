@@ -21,7 +21,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	. "github.com/xoxo/crm-x/Config"
+	"github.com/xoxo/crm-x/util/logger"
 )
 
 const (
@@ -68,7 +68,7 @@ func (c *Client) readPump() {
 	defer func() {
 		c.hub.unregister <- c
 		c.conn.Close()
-		Logger.Info("Close a websocket connsction!")
+		logger.Info("Close a websocket connsction!")
 	}()
 	c.conn.SetReadLimit(maxMessageSize)
 	c.conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -96,7 +96,7 @@ func (c *Client) writePump() {
 	defer func() {
 		ticker.Stop()
 		c.conn.Close()
-		// Logger.Info("Close a websocket connsction!")
+		// logger.Info("Close a websocket connsction!")
 	}()
 	for {
 		select {
@@ -148,5 +148,5 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	go client.writePump()
 	go client.readPump()
 
-	Logger.Info("Create a new websocket connection!")
+	logger.Info("Create a new websocket connection!")
 }

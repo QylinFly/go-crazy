@@ -17,9 +17,10 @@
 	"log"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"github.com/xoxo/crm-x/util/logger"
  )
 
- var Logger *zap.Logger
+ var _logger *zap.Logger
 
  func InitLogger()  {
 	var err error
@@ -39,14 +40,15 @@
 	cfg.Level.SetLevel(zap.DebugLevel)
 
 	// 建立
-	Logger,err = cfg.Build()
+	_logger,err = cfg.Build()
 	if(err != nil){
 		log.Println(fmt.Sprintf("\n Init logger error, and got err=%+v\n", err))
 	}
 	
 	// start
-	Logger.Info("--------------------------------------------------")
-	Logger.Info("-------------------App start----------------------")
-	Logger.Info("--------------------------------------------------")
-	
+	_logger.Info("--------------------------------------------------")
+	_logger.Info("-------------------App start----------------------")
+	_logger.Info("--------------------------------------------------")
+
+	logger.SetLogger(_logger)
  }

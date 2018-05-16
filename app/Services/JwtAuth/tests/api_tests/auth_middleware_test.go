@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"github.com/codegangsta/negroni"
 	"github.com/stretchr/testify/assert"
-	. "gopkg.in/check.v1"
+	// . "gopkg.in/check.v1"
 	"net/http"
 	"net/http/httptest"
 	"os"

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"go.uber.org/zap"
 	. "github.com/xoxo/crm-x/util"
-	. "github.com/xoxo/crm-x/Config"
+	"github.com/xoxo/crm-x/util/logger"
 	Gin "github.com/gin-gonic/gin"
 	"github.com/xoxo/crm-x/app/Services/Elastic/Models"
 	"github.com/olivere/elastic"
@@ -224,7 +224,7 @@ func GetHandler(c *Gin.Context)  {
 			panic(err)
 		}
 
-		Logger.Debug("Elastic Get",zap.String("Hits", fmt.Sprint(dat1))) //fmt.Sprint(dat1)
+		logger.Debug("Elastic Get",zap.String("Hits", fmt.Sprint(dat1))) //fmt.Sprint(dat1)
 		
 		dat1["_id"]=hit.Id
 		dat1["_type"]=hit.Type

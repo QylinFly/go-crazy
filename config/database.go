@@ -18,6 +18,7 @@ import (
 	"path/filepath"
     "github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
+	"github.com/xoxo/crm-x/util/logger"
 	//  _ "github.com/jinzhu/gorm/dialects/postgres"
 	//  _ "github.com/jinzhu/gorm/dialects/sqlite"
 	//  _ "github.com/jinzhu/gorm/dialects/mssql"
@@ -28,7 +29,7 @@ var DB	*gorm.DB
 
 func CloseDB() {
 	DB.Close()
-	Logger.Info("Begin to close db connection!")
+	logger.Info("Begin to close db connection!")
 }
 
 func InitDB() {
@@ -59,7 +60,7 @@ func openConnection() (db *gorm.DB, err error) {
 	case "mysql":
 		// db, err := gorm.Open("mysql", "root:123456@(127.0.0.1:3306)/dbname?charset=utf8&parseTime=True&loc=Local")
 		var str_open = db_user+":"+db_pwd+"@("+db_host+":"+db_port+")/"+db_db_name+"?charset=utf8&parseTime=True&loc=Local"
-		Logger.Debug("open da str ==> "+str_open)
+		logger.Debug("open da str ==> "+str_open)
 		db, err = gorm.Open("mysql", str_open)
 	case "postgres":
 		// todo

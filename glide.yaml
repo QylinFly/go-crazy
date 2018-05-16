@@ -1,0 +1,59 @@
+package: github.com/xoxo/crm-x
+ignore:
+- appengine
+- google.golang.org/appengine/cloudsql
+- golang.org/x/net/trace
+- golang.org/x/net/context
+- golang.org/x/net/html
+- golang.org/x/net/publicsuffix
+- golang.org/x/crypto/md4
+- golang.org/x/crypto/acme/autocert
+import:
+- package: github.com/boltdb/bolt
+- package: github.com/codegangsta/negroni
+- package: github.com/dgraph-io/badger
+- package: github.com/dgrijalva/jwt-go
+  subpackages:
+  - request
+- package: github.com/fatih/structs
+- package: github.com/garyburd/redigo
+  subpackages:
+  - redis
+- package: github.com/gin-gonic/gin
+- package: github.com/golang/crypto
+  subpackages:
+  - bcrypt
+- package: github.com/golang/net
+  subpackages:
+  - context
+- package: github.com/gorilla/websocket
+- package: github.com/jinzhu/configor
+- package: github.com/jinzhu/gorm
+  subpackages:
+  - dialects/mysql
+- package: github.com/kataras/golog
+- package: github.com/kataras/iris
+  subpackages:
+  - context
+  - core/errors
+  - core/memstore
+  - sessions
+  - sessions/sessiondb/redis/service
+- package: github.com/olivere/elastic
+- package: github.com/satori/go.uuid
+- package: github.com/syndtr/goleveldb
+  subpackages:
+  - leveldb
+  - leveldb/opt
+- package: go.uber.org/zap
+  subpackages:
+  - zapcore
+- package: golang.org/x/net
+- package: golang.org/x/crypto
+- package: golang.org/x/sys
+- package: github.com/mattn/go-isatty
+  version: ~0.0.3
+testImport:
+- package: github.com/stretchr/testify
+  subpackages:
+  - assert
