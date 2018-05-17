@@ -9,7 +9,6 @@
  * Copyright 2017 - 2027 乐编程, 乐编程
  */
 
-
  package middleware
 
  import (
@@ -39,10 +38,8 @@
 		api_response, exists  := c.Get("api_response")
 		if(exists){
 			meta := Gin.H{"timestamp": time.Now().UnixNano(), "response_time": latency}
-
 			c.JSON(c.Writer.Status(), Gin.H{"data": api_response, "meta": meta})
 		}
-
 		if(c.Writer.Status()==500){
 			c.JSON(c.Writer.Status(), c.Errors)
 		}

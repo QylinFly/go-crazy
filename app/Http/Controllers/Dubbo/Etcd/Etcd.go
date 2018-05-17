@@ -1,3 +1,15 @@
+/*
+ * 
+ * File: Etcd.go
+ * Author: QylinFly (18612116114@163.com)
+ * Created: 星期 3, 2018-5-16 8:16:50 pm
+ * -----
+ * Modified By: QylinFly (18612116114@163.com>)
+ * Modified: 星期 4, 2018-5-17 1:47:54 pm
+ * -----
+ * Copyright 2017 - 2027
+ */
+
 package Etcd
 
 import (
@@ -6,9 +18,9 @@ import (
 	"strings"
 	"sync"
 	"time"
-
 	etcd "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/concurrency"
+	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Etcd/store"
 )
 
 const (
@@ -72,7 +84,7 @@ func New(addrs []string, options *store.Config) (store.Store, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	
 	return s, nil
 }
 
@@ -102,17 +114,25 @@ func (s *EtcdV3) normalize(key string) string {
 
 // Get the value at "key", returns the last modified
 // index to use in conjunction to Atomic calls
-func (s *EtcdV3) Get(key string, opts *store.ReadOptions) (pair *store.KVPair, err error) {
+func (s *EtcdV3) Get(key string, opts *store.ReadOptions, withPrefix bool) (pair []*store.KVPair, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), etcdDefaultTimeout)
 
 	var result *etcd.GetResponse
 
-	if opts != nil && !opts.Consistent {
-		result, err = s.client.KV.Get(ctx, s.normalize(key), etcd.WithSerializable())
-	} else {
-		result, err = s.client.KV.Get(ctx, s.normalize(key))
+	if(withPrefix){
+		if opts != nil && !opts.Consistent {
+			result, err = s.client.KV.Get(ctx, s.normalize(key), etcd.WithPrefix(), etcd.WithSort(etcd.SortByKey, etcd.SortDescend),etcd.WithSerializable())
+		} else {
+			result, err = s.client.KV.Get(ctx, s.normalize(key), etcd.WithPrefix(), etcd.WithSort(etcd.SortByKey, etcd.SortDescend))
+		}
+	}else{
+		if opts != nil && !opts.Consistent {
+			result, err = s.client.KV.Get(ctx, s.normalize(key), etcd.WithSerializable())
+		} else {
+			result, err = s.client.KV.Get(ctx, s.normalize(key))
+		}
 	}
-
+	
 	cancel()
 
 	if err != nil {
@@ -133,7 +153,7 @@ func (s *EtcdV3) Get(key string, opts *store.ReadOptions) (pair *store.KVPair, e
 		})
 	}
 
-	return kvs[0], nil
+	return kvs, nil
 }
 
 // Put a value at "key"
@@ -173,7 +193,7 @@ func (s *EtcdV3) Delete(key string) error {
 
 // Exists checks if the key exists inside the store
 func (s *EtcdV3) Exists(key string, opts *store.ReadOptions) (bool, error) {
-	_, err := s.Get(key, opts)
+	_, err := s.Get(key, opts, false)
 	if err != nil {
 		if err == store.ErrKeyNotFound {
 			return false, nil
@@ -195,7 +215,7 @@ func (s *EtcdV3) Watch(key string, stopCh <-chan struct{}, opts *store.ReadOptio
 	respCh := make(chan *store.KVPair)
 
 	// Get the current value
-	pair, err := s.Get(key, opts)
+	pair, err := s.Get(key, opts,false)
 	if err != nil {
 		return nil, err
 	}
@@ -205,7 +225,7 @@ func (s *EtcdV3) Watch(key string, stopCh <-chan struct{}, opts *store.ReadOptio
 		defer close(respCh)
 
 		// Push the current value through the channel.
-		respCh <- pair
+		respCh <- pair[0]
 
 		watchCh := wc.Watch(context.Background(), s.normalize(key))
 

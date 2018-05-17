@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"flag"
 	"os/signal"
 	"github.com/jinzhu/configor"
 	Gin "github.com/gin-gonic/gin"
@@ -14,22 +15,31 @@ import (
 	"github.com/xoxo/crm-x/util/logger"
 )
 
-
-
-
 func main() {
+	fmt.Println(os.Args)
 	// load config from file
 	configor.Load(&Config, ".env.yml")
 	// fmt.Printf("config: %#v\n\n\n", Config)
-	
 	// init path
 	InitPath()
+
+	port := flag.String("Dserver.port", Config.Port, "Listen and Server in Port")
+	etcdUrl := flag.String("Detcd.url", "172.17.0.1:2379", "etcd listen port")
+	logsDir := flag.String("Dlogs.dir", Path.Storage, "logs dir")
+	flag.Parse()
+
+	Config.Port = *port
+	Config.EtcdUrl = *etcdUrl
+	Path.LogsDir = *logsDir
+
 
 	// init logger
 	InitLogger()
 
+	logger.Info("-----Args---- port = "+*port+"  etcdUrl = "+*etcdUrl+"  logsDir = "+*logsDir+"\n")
+
 	// init database
-	InitDB()
+	// InitDB()
 
 	// init gin engine
 	engine := Gin.Default()
@@ -40,7 +50,8 @@ func main() {
 }
 func startNormal(engine *Gin.Engine)  {
 	// Listen and Server in Config.Port
-	engine.Run(":"+Config.Port)
+
+	engine.Run(":" + Config.Port)
 }
 
 func startGracefulShutdown(engine *Gin.Engine)  {

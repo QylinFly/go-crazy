@@ -13,6 +13,7 @@
  package Config
 
  import (
+	"os"
 	"fmt"
 	"log"
 	"go.uber.org/zap"
@@ -26,14 +27,18 @@
 	var err error
 	cfg := zap.NewProductionConfig()
 
+	erre := os.MkdirAll(Path.LogsDir+"/logs", os.ModePerm) //生成多级目录
+	if erre != nil {
+		fmt.Println(erre)
+	}
 	// config 
 	cfg.OutputPaths = []string{
 		"stdout",
-		Path.Storage+"logs/go-crazy.log",
+		Path.LogsDir+"/logs/go-crazy.log",
 	}
 	cfg.ErrorOutputPaths = []string{
 		"stderr",
-		Path.Storage+"logs/go-crazy-error.log",
+		Path.LogsDir+"/logs/go-crazy-error.log",
 	}
 	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	// level 

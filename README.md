@@ -21,6 +21,18 @@ A Golang Framework For Web Artisans
     install
     curl https://glide.sh/get | sh
 
+    glide get github.com/Masterminds/cookoo
+
+    glide install
+
+    $ glide create                            # Start a new workspace
+    $ open glide.yaml                         # and edit away!
+    $ glide get github.com/Masterminds/cookoo # Get a package and add to glide.yaml
+    $ glide install                           # Install packages and dependencies
+    # work, work, work
+    $ go build                                # Go tools work normally
+    $ glide up                                # Update to newest versions of the package
+
     ### glide
     $ glide mirror set https://golang.org/x/mobile https://github.com/golang/mobile --vcs git
     $ glide mirror set https://golang.org/x/crypto https://github.com/golang/crypto --vcs git
@@ -29,6 +41,13 @@ A Golang Framework For Web Artisans
     $ glide mirror set https://golang.org/x/text https://github.com/golang/text --vcs git
     $ glide mirror set https://golang.org/x/image https://github.com/golang/image --vcs git
     $ glide mirror set https://golang.org/x/sys https://github.com/golang/sys --vcs git
+    $ glide mirror set https://google.golang.org/grpc https://github.com/grpc/grpc-go --vcs git
+    $ glide mirror set https://google.golang.org/genproto https://github.com/google/go-genproto --vcs git
+
+
+
+
+    google.golang.org/grpc
 
 4.Run your project
 
@@ -93,3 +112,8 @@ A Golang Framework For Web Artisans
     https://github.com/kataras/iris/tree/master/sessions/sessiondb
     https://github.com/laravel/framework/tree/5.5/src/Illuminate
     glide
+
+### 命令行
+
+    "flag"
+    http://www.01happy.com/golang-command-line-arguments/

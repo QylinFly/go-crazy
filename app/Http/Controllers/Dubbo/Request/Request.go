@@ -1,4 +1,16 @@
-// Package gorequest inspired by Nodejs SuperChannel provides easy-way to write http client
+
+/*
+ * 请求管理
+ * File: Request.go
+ * Author: QylinFly (18612116114@163.com)
+ * Created: 星期 3, 2018-5-16 4:16:42 pm
+ * -----
+ * Modified By: QylinFly (18612116114@163.com>)
+ * Modified: 星期 4, 2018-5-17 1:46:33 pm
+ * -----
+ * Copyright 2017 - 2027
+ */
+
 package Request
 
 import (

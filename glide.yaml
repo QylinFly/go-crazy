@@ -53,6 +53,10 @@ import:
 - package: golang.org/x/sys
 - package: github.com/mattn/go-isatty
   version: ~0.0.3
+- package: github.com/coreos/etcd
+  version: ~3.3.5
+  subpackages:
+  - clientv3
 testImport:
 - package: github.com/stretchr/testify
   subpackages:

@@ -48,7 +48,8 @@ var Path = struct {
 	Base 		string `default:"./"`
 	Static 		string `default:"./static/"`	
 	Resource	string `default:"./static/"`
-	Storage		string `default:"./storage/"`
+	Storage		string `default:"./storage"`
+	LogsDir		string `default:"./storage"`
 }{}
 
 func InitPath()  {
@@ -58,7 +59,8 @@ func InitPath()  {
 	Path.Base = base 
 	Path.Static = base + "/static/"
 	Path.Resource = base + "/static/"
-	Path.Storage = base + "/storage/"
+	Path.Storage = base + "/storage"
+	Path.LogsDir = base + "/storage"
 }
 
 func getCurrentDirectory() string {
