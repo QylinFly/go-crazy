@@ -43,6 +43,9 @@ A Golang Framework For Web Artisans
     $ glide mirror set https://golang.org/x/sys https://github.com/golang/sys --vcs git
     $ glide mirror set https://google.golang.org/grpc https://github.com/grpc/grpc-go --vcs git
     $ glide mirror set https://google.golang.org/genproto https://github.com/google/go-genproto --vcs git
+    $ glide mirror set https://gonum.org/v1/gonum  https://github.com/gonum/gonum --vcs git
+
+
 
 
 

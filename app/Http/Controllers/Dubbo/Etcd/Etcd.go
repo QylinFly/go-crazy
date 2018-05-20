@@ -8,6 +8,7 @@
  * Modified: 星期 4, 2018-5-17 1:47:54 pm
  * -----
  * Copyright 2017 - 2027
+ *	https://github.com/abronan/valkeyrie/store/etcd/v3
  */
 
 package Etcd

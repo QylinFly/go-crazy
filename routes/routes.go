@@ -14,8 +14,8 @@
  import(
 	Gin "github.com/gin-gonic/gin"
 	"github.com/xoxo/crm-x/Config"
-	"github.com/xoxo/crm-x/app/Services/Elastic"
-	jwt "github.com/xoxo/crm-x/app/Services/JwtAuth/routers"
+	// "github.com/xoxo/crm-x/app/Services/Elastic"
+	// jwt "github.com/xoxo/crm-x/app/Services/JwtAuth/routers"
  )
 
  func SetupRouter(engine *Gin.Engine) *Gin.Engine {
@@ -23,35 +23,35 @@
 	Config.SetupGlobalMiddleware(engine)
 
 	// create group api and  admin
-	apiGroup := engine.Group("api")
-	adminGroup := engine.Group("admin")
-	wsGroup := engine.Group("ws")
+	// apiGroup := engine.Group("api")
+	// adminGroup := engine.Group("admin")
+	// wsGroup := engine.Group("ws")
 
-	wsElastic := engine.Group("elastic")
+	// wsElastic := engine.Group("elastic")
 
-	authGroup := engine.Group("auth")
+	// authGroup := engine.Group("auth")
 
 	
 
 	// setup router
 	SetupWebRouter(engine)
-	SetupApiRouter(apiGroup)
-	SetupAdminRouter(adminGroup)
+	// SetupApiRouter(apiGroup)
+	// SetupAdminRouter(adminGroup)
 	// websocket
-	SetupWebsocketRouter(wsGroup)
+	// SetupWebsocketRouter(wsGroup)
 
 	//Elastic
-	Elastic.InitElastic(wsElastic)
+	// Elastic.InitElastic(wsElastic)
 
 	// jwt 
-	jwt.SetAuthenticationRoutes(authGroup)
+	// jwt.SetAuthenticationRoutes(authGroup)
 
 	// setup up Middleware
-	Config.SetupApiMiddleware(apiGroup)
-	Config.SetupAdminMiddleware(adminGroup)
+	// Config.SetupApiMiddleware(apiGroup)
+	// Config.SetupAdminMiddleware(adminGroup)
 
 	// Serving static files
-	engine.Static("/assets", "./static")
+	// engine.Static("/assets", "./static")
 	// router.StaticFS("/more_static", http.Dir("my_file_system"))
 
 	// error page 

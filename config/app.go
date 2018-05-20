@@ -18,15 +18,15 @@
 	"strings"
 	"path/filepath"
 	Gin "github.com/gin-gonic/gin"
-	"github.com/xoxo/crm-x/app/Http/Middleware"
+	// "github.com/xoxo/crm-x/app/Http/Middleware"
  )
 
  ////////////////Middleware begin//////////////////////
  func SetupGlobalMiddleware(engine *Gin.Engine)  {
 	// Global middleware
-	engine.Use(middleware.FormatResponse())
+	// engine.Use(middleware.FormatResponse())
 	// Recovery middleware recovers from any panics and writes a 500 if there was one.
-	engine.Use(Gin.Recovery())
+	// engine.Use(Gin.Recovery())
  }
 
  func SetupApiMiddleware(router *Gin.RouterGroup)  {

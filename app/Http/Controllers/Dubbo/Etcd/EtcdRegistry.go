@@ -19,6 +19,7 @@ import (
 	"strconv"
 	"github.com/xoxo/crm-x/util/logger"
 	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Etcd/store"
+	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Util"
 )
 type EtcdRegistry struct {
 	addrs []string
@@ -32,12 +33,12 @@ func NewClient(addrs []string) *EtcdRegistry {
 	kv, err := New(
 		addrs,
 		&store.Config{
-			ConnectionTimeout: 0,//3 * time.Second,
+			ConnectionTimeout: 3 * time.Second,
 			Username:          "",
 			Password:          "",
 		},
 	)
-
+	
 	if err != nil {
 		logger.Info("----------------cannot create store---------------------")
 	}else{
@@ -69,9 +70,15 @@ func (e *EtcdRegistry)	TryNewEtcd()  *EtcdRegistry{
 	return e
 }
 
-func (e *EtcdRegistry)	Find(key string)  []*Endpoint{
+func (e *EtcdRegistry)	WatchTree(key string)  (<-chan []*store.KVPair, error){
 
-	endpoints := []*Endpoint{}
+	stopCh := make(<-chan struct{})
+	events, err := e.kv.WatchTree(key, stopCh, nil)
+	return events, err
+}
+func (e *EtcdRegistry)	Find(key string)  []*Util.Endpoint{
+
+	endpoints := []*Util.Endpoint{}
 	
 	if e.kv == nil	{
 		e = e.TryNewEtcd()
@@ -82,26 +89,40 @@ func (e *EtcdRegistry)	Find(key string)  []*Endpoint{
 
 	k ,err :=	e.kv.Get(key,nil,true)
 	if err != nil {
-		log.Fatal(err)
+		log.Print(err)
+		return endpoints
 	}
-	
-	for _, ev := range k {
-		
-		start := strings.LastIndex(ev.Key,"/")
 
+	logger.Info("发现服务节点："+key)
+	endpoints = e.KVPairToEndpoint(k)
+
+	return endpoints
+}
+// 数据类型转换
+func (e *EtcdRegistry)KVPairToEndpoint( KVS []*store.KVPair) []*Util.Endpoint{
+
+	endpoints := []*Util.Endpoint{}
+	// var idx int = 1
+	for _, ev := range KVS {
+		start := strings.LastIndex(ev.Key,"/")
 		if start >=0{
 			endpointStr := string(ev.Key[start+1:strings.Count(ev.Key,"")-1 ])
 			host := strings.Split(endpointStr,":")[0]
 			portStr := strings.Split(endpointStr,":")[1];
 			port,_	:=	strconv.Atoi(portStr)
-			ep	:=	NewEndpoint(host,port)
+			s_w := string(ev.Value[:])
+			w,_	:=	strconv.Atoi(s_w) 
+			ep	:=	Util.NewEndpoint(host,port,w)
+			// idx++
 
-			logger.Info("发现服务节点："+host +":"+ portStr)
+			logger.Info("发现服务节点："+host +":"+ portStr + " >>weight = " + s_w)
 			endpoints = append(endpoints, ep)
 		}
 	}
 	return endpoints
 }
+
+
 
 func (e *EtcdRegistry)tests() *EtcdRegistry{
 

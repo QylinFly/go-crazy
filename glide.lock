@@ -1,5 +1,5 @@
-hash: 30648935ff472b3712d0d0f2f0e74d6406b306ca31f54b0c3793dc474863dc27
-updated: 2018-05-16T23:53:12.617533+08:00
+hash: c7dc00d1e0ec3ad26d1bbcc00ec40dd66572b6bcfcda1b191ebf58aaa24f1562
+updated: 2018-05-18T11:57:41.370067+08:00
 imports:
 - name: github.com/ajg/form
   version: 523a5da1a92f01b01f840b61689c0340a0243532
@@ -286,6 +286,22 @@ imports:
   - transform
   - unicode/bidi
   - unicode/norm
+- name: gonum.org/v1/gonum
+  version: 3f7b30d06c1c427c1ee146170e8952f2caef1ad2
+  subpackages:
+  - blas
+  - blas/blas64
+  - blas/gonum
+  - floats
+  - internal/asm/c128
+  - internal/asm/f32
+  - internal/asm/f64
+  - internal/math32
+  - lapack
+  - lapack/gonum
+  - lapack/lapack64
+  - mat
+  - stat
 - name: google.golang.org/genproto
   version: 09f6ed296fc66555a25fe4ce95173148778dfa85
   subpackages:

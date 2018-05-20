@@ -57,6 +57,9 @@ import:
   version: ~3.3.5
   subpackages:
   - clientv3
+- package: gonum.org/v1/gonum
+  subpackages:
+  - stat
 testImport:
 - package: github.com/stretchr/testify
   subpackages:

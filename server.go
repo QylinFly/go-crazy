@@ -23,7 +23,9 @@ func main() {
 	// init path
 	InitPath()
 
+	stype := flag.String("Dtype", "consumer", "service type consumer")
 	port := flag.String("Dserver.port", Config.Port, "Listen and Server in Port")
+	
 	etcdUrl := flag.String("Detcd.url", "172.17.0.1:2379", "etcd listen port")
 	logsDir := flag.String("Dlogs.dir", Path.Storage, "logs dir")
 	flag.Parse()
@@ -32,17 +34,16 @@ func main() {
 	Config.EtcdUrl = *etcdUrl
 	Path.LogsDir = *logsDir
 
-
 	// init logger
 	InitLogger()
 
-	logger.Info("-----Args---- port = "+*port+"  etcdUrl = "+*etcdUrl+"  logsDir = "+*logsDir+"\n")
+	logger.Info("-----Args 001---- port = "+*port+"  etcdUrl = "+*etcdUrl+"  logsDir = "+*logsDir+" stype ="+*stype+"\n")
 
 	// init database
 	// InitDB()
 
 	// init gin engine
-	engine := Gin.Default()
+	engine := Gin.New()
 	Route.SetupRouter(engine)
 
 	//startNormal(engine)

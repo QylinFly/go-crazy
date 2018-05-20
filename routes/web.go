@@ -20,7 +20,12 @@
 
  func SetupWebRouter(router *Gin.Engine)  {
 	// Ping test
-	router.LoadHTMLGlob("static/templates/*")
+	// router.LoadHTMLGlob("static/templates/*")
+
+	router.GET("/test2", func(c *Gin.Context)  {
+		c.String(200,"body")
+
+	 })
 
 
 	_ = DubboController.SetupDubbo(router)
@@ -32,11 +37,11 @@
 		})
 	 })
 
-	router.GET("/uuid", func(c *Gin.Context)  {
-	c.HTML(200, "browser-uuid.html", Gin.H{})
-	})
+	// router.GET("/uuid", func(c *Gin.Context)  {
+	// c.HTML(200, "browser-uuid.html", Gin.H{})
+	// })
 	 
-	router.GET("/w", func(c *Gin.Context)  {
-		c.HTML(200, "websocket.html", Gin.H{})
-	 })
+	// router.GET("/w", func(c *Gin.Context)  {
+	// 	c.HTML(200, "websocket.html", Gin.H{})
+	//  })
  }

@@ -42,6 +42,8 @@ import (
 
 	"github.com/moul/http2curl"
 	"golang.org/x/net/publicsuffix"
+	Gin "github.com/gin-gonic/gin"
+	"github.com/xoxo/crm-x/util/logger"
 )
 
 type Request *http.Request
@@ -87,6 +89,9 @@ type SuperHttpClient struct {
 		Attempt         int
 		Enable          bool
 	}
+	reqChan chan RequestPool
+	respChan chan ResponsePool
+	maxWorker int
 }
 
 type SuperChannel struct {
@@ -108,6 +113,9 @@ type SuperChannel struct {
 	Errors            []error
 
  }
+
+
+
 
 var DisableTransportSwap = false
 
@@ -138,6 +146,9 @@ func NewClient() *SuperHttpClient {
 		Debug:             debug,
 		CurlCommand:       false,
 		logger:            log.New(os.Stderr, "[gorequest]", log.LstdFlags),
+		reqChan:  make(chan RequestPool),
+		respChan:  make(chan ResponsePool),
+		maxWorker: 280,
 	}
 	// disable keep alives by default, see this issue https://github.com/parnurzeal/gorequest/issues/75
 	http.Transport.DisableKeepAlives = true
@@ -1272,3 +1283,132 @@ func (ch *SuperChannel) AsCurlCommand() (string, error) {
 	}
 	return cmd.String(), nil
 }
+
+
+//----------------------------- 增加池化处理 防止协程过多崩溃-------------------------------------//
+type ResponsePool struct {
+	resp *http.Response
+	cont *Gin.Context
+	stopCh chan int
+	time int
+    err error
+}
+
+type RequestPool struct {
+	req *http.Request
+	cont *Gin.Context
+	stopCh chan int
+	time int
+    err error
+}
+
+func (sHttp *SuperHttpClient) InitPool(){
+	go sHttp.StepUpWorkerPool(sHttp.reqChan, sHttp.respChan)
+	go sHttp.ConsumerLoop(sHttp.respChan)
+}
+
+// Worker Pool
+func (sHttp *SuperHttpClient) StepUpWorkerPool(reqChan chan RequestPool, respChan chan ResponsePool) {
+	
+	logger.Info("StepUpWorkerPool")
+    for i := 0; i < sHttp.maxWorker; i++ {
+        go sHttp.Worker(reqChan, respChan)
+    }
+}
+
+// Worker
+func (sHttp *SuperHttpClient) Worker(reqChan chan RequestPool, respChan chan ResponsePool) {
+    for req := range reqChan {
+		// resp, err := sHttp.Client.Do(req.req)
+		startTime := time.Now()
+
+		resp, err := sHttp.Transport.RoundTrip(req.req)
+
+		latency := time.Since(startTime)
+		latencyInt :=  int(latency.Seconds()*10000.0)
+
+        r := ResponsePool{resp,req.cont,req.stopCh,latencyInt,err}
+		respChan <- r
+    }
+}
+
+// Consumer
+func (sHttp *SuperHttpClient) ConsumerLoop(respChan chan ResponsePool){
+
+    for {
+        select {
+        case r,ok := <-respChan:
+            if ok {
+                if r.err != nil {
+                    r.stopCh <- -1
+                } else {
+					body, _ := ioutil.ReadAll(r.resp.Body)
+					// Reset resp.Body so it can be use again
+					r.resp.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+
+					if err := r.resp.Body.Close(); err != nil {
+                        // log.Println(r.err)
+					}
+					bodyString := string(body)
+					r.cont.String(200,bodyString)
+					// fmt.Printf("consumer  value = "+ bodyString +"\n")
+					r.stopCh <- r.time
+                }
+            }
+        }
+    }
+}
+
+// 结束并放到池中执行
+func (ch *SuperChannel) EndPool(cont *Gin.Context) (<-chan int, []error) {
+	var (
+		req  *http.Request
+		err  error
+	)
+	
+	// check whether there is an error. if yes, return all errors
+	if len(ch.Errors) != 0 {
+		return nil, ch.Errors
+	}
+	// check if there is forced type
+	switch ch.ForceType {
+	case "json", "form", "xml", "text", "multipart":
+		ch.TargetType = ch.ForceType
+		// If forcetype is not set, check whether user set Content-Type header.
+		// If yes, also bounce to the correct supported TargetType automatically.
+	default:
+		for k, v := range Types {
+			if ch.Header["Content-Type"] == v {
+				ch.TargetType = k
+			}
+		}
+	}
+
+	// if slice and map get mixed, let's bounce to rawstring
+	if len(ch.Data) != 0 && len(ch.SliceData) != 0 {
+		ch.BounceToRawString = true
+	}
+
+	// Make Request
+	req, err = ch.MakeRequest()
+	if err != nil {
+		ch.Errors = append(ch.Errors, err)
+		return nil, ch.Errors
+	}
+
+	// Set Transport
+	if !DisableTransportSwap {
+		ch.http.Client.Transport = ch.http.Transport
+	}
+
+
+	stopCh := make(chan int)
+	
+	r := RequestPool{req,cont,stopCh,0,err}
+	
+
+	ch.http.reqChan <- r
+
+	return stopCh, nil
+}
+//------------------------------------------------------------------//
