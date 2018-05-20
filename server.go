@@ -23,31 +23,41 @@ func main() {
 	// init path
 	InitPath()
 
-	stype := flag.String("Dtype", "consumer", "service type consumer")
+	sType := flag.String("Dtype", "consumer", "service type consumer")
 	port := flag.String("Dserver.port", Config.Port, "Listen and Server in Port")
-	
 	etcdUrl := flag.String("Detcd.url", "172.17.0.1:2379", "etcd listen port")
 	logsDir := flag.String("Dlogs.dir", Path.Storage, "logs dir")
+	Channels := flag.String("DChannels", Config.Channels, "Channels num")
+	dubboPort := flag.String("Ddubbo.protocol.port", Config.DubboPort, "Channels num")
+	
+	
 	flag.Parse()
 
 	Config.Port = *port
 	Config.EtcdUrl = *etcdUrl
+	Config.Type = *sType
+	Config.Channels = *Channels
 	Path.LogsDir = *logsDir
+	Config.DubboPort = *dubboPort
 
 	// init logger
 	InitLogger()
 
-	logger.Info("-----Args 001---- port = "+*port+"  etcdUrl = "+*etcdUrl+"  logsDir = "+*logsDir+" stype ="+*stype+"\n")
+	logger.Info("-----Args 001---- port = "+*port+"  etcdUrl = "+*etcdUrl+"  logsDir = "+*logsDir+" stype ="+*sType+"\n")
 
 	// init database
 	// InitDB()
 
-	// init gin engine
-	engine := Gin.New()
-	Route.SetupRouter(engine)
+	if sType == "consumer"{
+		// init gin engine
+		engine := Gin.New()
+		Route.SetupRouter(engine)
 
-	//startNormal(engine)
-	startGracefulShutdown(engine)
+		//startNormal(engine)
+		startGracefulShutdown(engine)
+	}else{
+
+	}
 }
 func startNormal(engine *Gin.Engine)  {
 	// Listen and Server in Config.Port

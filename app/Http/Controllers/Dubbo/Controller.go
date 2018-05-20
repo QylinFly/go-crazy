@@ -22,24 +22,19 @@
 	"strings"
 	"runtime"
 	"strconv"
-	// . "github.com/xoxo/crm-x/util"
 	. "github.com/xoxo/crm-x/Config"
 	Gin "github.com/gin-gonic/gin"
 	"github.com/xoxo/crm-x/util/logger"
 	Request "github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Request"
 	Etcd "github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Etcd"
-	// "github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Util"
 	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/LoadBalancing"
 	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Protocol"
-	
  )
 
  var (
 	rootPath string = "dubbomesh";
 	serviceName string = "com.alibaba.dubbo.performance.demo.provider.IHelloService"
-
 	etcdKey string = fmt.Sprintf("/%s/%s",rootPath,serviceName)
-	
 )
 
  type BubboAgent struct {
@@ -75,9 +70,6 @@
 
 	router.GET("/info", agent.PrintInfo)
 	
-
-
-
 	Dubbo.New().InitHeader()
 
 	return agent

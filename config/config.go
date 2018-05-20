@@ -17,6 +17,8 @@
 var Config = struct {
 	APPName string `default:"app name"`
 	Port string `default:"80"`
+	Type string `default:"provider"`
+	Channels int `default:"200"`
 
 	EtcdUrl string `default:"172.17.0.1:2379"`
 

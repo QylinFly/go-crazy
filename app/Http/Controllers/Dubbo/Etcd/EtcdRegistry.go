@@ -13,17 +13,22 @@
 package Etcd
 
 import (
+	"net"
 	"time"
 	"log"
+	"fmt"
+	"context"
 	"strings"
 	"strconv"
 	"github.com/xoxo/crm-x/util/logger"
+	. "github.com/xoxo/crm-x/Config"
+	etcd "github.com/coreos/etcd/clientv3"
 	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Etcd/store"
 	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Util"
 )
 type EtcdRegistry struct {
 	addrs []string
-	kv store.Store
+	kv *EtcdV3
 }
 
 func NewClient(addrs []string) *EtcdRegistry {
@@ -42,7 +47,7 @@ func NewClient(addrs []string) *EtcdRegistry {
 	if err != nil {
 		logger.Info("----------------cannot create store---------------------")
 	}else{
-		logger.Info("------------------create store success!------------------")
+		logger.Info("---------------create store success!------------------")
 	}
 	etcd.kv = kv
 
@@ -66,6 +71,10 @@ func (e *EtcdRegistry)	TryNewEtcd()  *EtcdRegistry{
 	}else{
 		e.kv = kv
 		logger.Info("------------------create store success!------------------")
+		// resp, err := e.kv.Grant(context.TODO(), 5)
+		// if err != nil {
+		// 	log.Fatal(err)
+		// }
 	}
 	return e
 }
@@ -87,7 +96,7 @@ func (e *EtcdRegistry)	Find(key string)  []*Util.Endpoint{
 		return endpoints
 	}
 
-	k ,err :=	e.kv.Get(key,nil,true)
+	k ,err :=e.kv.Get(key,nil,true)
 	if err != nil {
 		log.Print(err)
 		return endpoints
@@ -132,4 +141,39 @@ func (e *EtcdRegistry)tests() *EtcdRegistry{
 	logger.Info(k[0].Key+"  "+string(k[0].Value[:]))
 	// fmt.Printf(k[0].Key+"  "+string(k[0].Value[:])+"\n")
 	return e
+}
+
+func  getHostIp() string{
+	addrs, err := net.InterfaceAddrs()
+    if err != nil {
+        logger.Info("获取本机IP地址失败！")
+    }
+    for _, address := range addrs {
+        // 检查ip地址判断是否回环地址
+        if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+            if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
+            }
+        }
+	}
+	return ""
+}
+// 向ETCD中注册服务
+func (e *EtcdRegistry) Register(rootPath string,serviceName string, port int)  {
+	
+	strKey := fmt.Sprintf("/%s/%s/{%s}:{%d}",rootPath,serviceName, getHostIp(),port)
+
+	channels := Config.Channels
+	value := []byte(strconv.Itoa(channels))
+	
+	resp, err := e.kv.Client().Grant(context.Background(), 30)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	 ops := &store.WriteOptions{
+		IsDir :false,
+		TTL   :time.Second*20,
+	 }
+	e.kv.Put(strKey,value,ops,true)
 }

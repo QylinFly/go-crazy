@@ -60,6 +60,7 @@ import:
 - package: gonum.org/v1/gonum
   subpackages:
   - stat
+- package: github.com/rsms/gotalk
 testImport:
 - package: github.com/stretchr/testify
   subpackages:

@@ -1,5 +1,5 @@
-hash: c7dc00d1e0ec3ad26d1bbcc00ec40dd66572b6bcfcda1b191ebf58aaa24f1562
-updated: 2018-05-18T11:57:41.370067+08:00
+hash: 1fb9901e9070cbc40dd72031ab92d659de450d7a92f2bcc6c0aa46fffd9d98d4
+updated: 2018-05-20T23:44:40.58775+08:00
 imports:
 - name: github.com/ajg/form
   version: 523a5da1a92f01b01f840b61689c0340a0243532
@@ -201,6 +201,8 @@ imports:
   version: 792786c7400a136282c1664665ae0a8db921c6c2
   subpackages:
   - difflib
+- name: github.com/rsms/gotalk
+  version: 676bd297b7788be72ae22443880c558f19cd91ec
 - name: github.com/russross/blackfriday
   version: 4048872b16cc0fc2c5fd9eacf0ed2c2fedaa0c8c
 - name: github.com/ryanuber/columnize

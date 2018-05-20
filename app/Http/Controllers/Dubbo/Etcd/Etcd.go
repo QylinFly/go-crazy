@@ -19,6 +19,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"github.com/xoxo/crm-x/util/logger"
 	etcd "github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/clientv3/concurrency"
 	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Etcd/store"
@@ -49,10 +50,14 @@ type etcdLock struct {
 	ttl      time.Duration
 }
 
+func (s *EtcdV3) Client()  *etcd.Client {
+	return s.client
+}
+
 
 // New creates a new Etcd client given a list
 // of endpoints and an optional tls config
-func New(addrs []string, options *store.Config) (store.Store, error) {
+func New(addrs []string, options *store.Config) ( *EtcdV3, error) {
 	s := &EtcdV3{}
 
 	var (
@@ -158,9 +163,11 @@ func (s *EtcdV3) Get(key string, opts *store.ReadOptions, withPrefix bool) (pair
 }
 
 // Put a value at "key"
-func (s *EtcdV3) Put(key string, value []byte, opts *store.WriteOptions) (err error) {
+func (s *EtcdV3) Put(key string, value []byte, opts *store.WriteOptions,keepAlive bool) (err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), etcdDefaultTimeout)
 	pr := s.client.Txn(ctx)
+
+	var leaseId etcd.LeaseID
 
 	if opts != nil && opts.TTL > 0 {
 		lease := etcd.NewLease(s.client)
@@ -169,6 +176,7 @@ func (s *EtcdV3) Put(key string, value []byte, opts *store.WriteOptions) (err er
 			cancel()
 			return err
 		}
+		leaseId = resp.ID
 		pr.Then(etcd.OpPut(key, string(value), etcd.WithLease(resp.ID)))
 	} else {
 		pr.Then(etcd.OpPut(key, string(value)))
@@ -180,7 +188,21 @@ func (s *EtcdV3) Put(key string, value []byte, opts *store.WriteOptions) (err er
 		return err
 	}
 
+	if opts != nil && opts.TTL > 0 && keepAlive == true {
+		s.KeepAlive(leaseId)
+	}
+
 	return nil
+}
+
+func (s *EtcdV3) KeepAlive( leaseId etcd.LeaseID){
+	// the key 'foo' will be kept forever
+	ch, kaerr := s.client.KeepAlive(context.Background(), leaseId)
+	if kaerr != nil {
+		logger.AppendError("KeepAlive Error",kaerr)
+	}
+	ka := <-ch
+	logger.AppendInfo("KeepAlive ttl:", ka.TTL)
 }
 
 // Delete a value at "key"
@@ -481,7 +503,7 @@ func (l *etcdLock) Lock(stopChan chan struct{}) (<-chan struct{}, error) {
 		return nil, err
 	}
 
-	err = l.store.Put(l.writeKey, []byte(l.value), nil)
+	err = l.store.Put(l.writeKey, []byte(l.value), nil,false)
 	if err != nil {
 		return nil, err
 	}

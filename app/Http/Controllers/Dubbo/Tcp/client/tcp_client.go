@@ -1,4 +1,4 @@
-package main
+package TcpClient
 
 import (
 	"bufio"
@@ -69,11 +69,11 @@ func (self *Connection) read() {
 			self.onErrorCallback(err)
 			return
 		}
-
-		mensagem := make([]byte, num)
-		copy(mensagem, buf)
-
-		self.onMessageCallback(mensagem)
+		if num > 0{
+			mensagem := make([]byte, num)
+			copy(mensagem, buf)
+			self.onMessageCallback(mensagem)
+		}
 	}
 }
 
@@ -88,12 +88,10 @@ func New(address string) *Connection {
 }
 
 
-func main() {
+func mainTest() {
 	// client := New("10.99.2.116:20880")
 	client := New("127.0.0.1:1234")
 	
-	
-
 	dubbo := Dubbo.New()
 	client.OnOpen(func() {
 

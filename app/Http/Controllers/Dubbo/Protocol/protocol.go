@@ -122,7 +122,6 @@ func (dubbo * DubboRpcEncoder) GetEncoderData(parameter string) *bytes.Buffer{
 	data.WriteString("\"Ljava/lang/String;\"\n")
 	data.WriteString("\"" + parameter + "\"\n")
 	data.WriteString("{\"path\":\"com.alibaba.dubbo.performance.demo.provider.IHelloService\"}\n")
-	// data.WriteString("\n")
 	
 	dubbo.reqId ++
 	length := data.Len()
@@ -131,37 +130,7 @@ func (dubbo * DubboRpcEncoder) GetEncoderData(parameter string) *bytes.Buffer{
 	binary.Write(body, binary.BigEndian, int32(length))
 
 	body.Write(data.Bytes())
-	fmt.Println(body)
 	return body
-}
-
-func (dubbo * DubboRpcEncoder) GetStatus(data *[]byte) (v int, errstr string){
-
-		status := (*data)[3]
-	
-}
-
-
-public class RpcResponse {
-
-    private String requestId;
-    private byte[] bytes;
-
-    public String getRequestId() {
-        return requestId;
-    }
-
-    public void setRequestId(String requestId) {
-        this.requestId = requestId;
-    }
-
-    public byte[] getBytes() {
-        return bytes;
-    }
-
-    public void setBytes(byte[] bytes) {
-        this.bytes = bytes;
-    }
 }
 
 //  返回解析结构体
@@ -174,38 +143,64 @@ func (res* RpcResponse)ID() uint64{
 	return res.requestId
 }
 func (res* RpcResponse)Data() *[]byte{
-	return res.bytes
+	return &res.bytes
 }
 
 
-func  GetDecoderData(data *[]byte) (v *RpcResponse, errstr string){
+func  GetDecoderData(data *[]byte,res []*RpcResponse) (v []*RpcResponse, errstr string){
 	len := len(*data)
 
 	if (len < HEADER_LENGTH) {
-		return nil, "数据字段长度小于头部最小长度16"
+		return res, "数据字段长度小于头部最小长度16"
 	}
 
-	status := (*data)[3]
+	dubboByte :=  (*data)[0:2]
+	dubbo := binary.BigEndian.Uint16(dubboByte)
+	if dubbo != MAGIC{
+		fmt.Println(string(*data))
+		return res, "头部校验失败！"
+	}
+
+	statusByte := (*data)[3]
+	status := int8(statusByte)
 	if status != 20{
-		return nil, "数据状态异常"+string(status)
+		// 20 - OK
+		// 30 - CLIENT_TIMEOUT
+		// 31 - SERVER_TIMEOUT
+		// 40 - BAD_REQUEST
+		// 50 - BAD_RESPONSE
+		// 60 - SERVICE_NOT_FOUND
+		// 70 - SERVICE_ERROR
+		// 80 - SERVER_ERROR
+		// 90 - CLIENT_ERROR
+		// 100 - SERVER_THREADPOOL_EXHAUSTED_ERROR
+		return res, "数据状态异常 code="+ strconv.Itoa(int(status))
 	}
 	
 	dataLenByte :=  (*data)[12:16] 
 	dataLen :=binary.BigEndian.Uint32(dataLenByte)
 	tt := int(dataLen) + HEADER_LENGTH
 	if (len < tt) {
-		return nil, "头部加数据小于数据长度"
+		return res, "头部加数据小于数据长度"
 	}
 
 	requestIdBytes := (*data)[4:12]
 	requestId :=binary.BigEndian.Uint64(requestIdBytes)
 
-	rpcResponse =&RpcResponse{
+	rpcResponse := &RpcResponse{
 		requestId : requestId,
-		bytes : (*data)[HEADER_LENGTH+2:len-1] ,
+		bytes : (*data)[HEADER_LENGTH+2:tt-1] ,
 	}
 
-	return rpcResponse,nil
+	if (len > tt) {
+		// return res, "严重错误，可能粘包了"
+		dd := (*data)[tt:len]
+		return GetDecoderData(&dd,res)
+	}
+
+	res = append(res,rpcResponse)
+
+	return res, ""
 }
 
 
