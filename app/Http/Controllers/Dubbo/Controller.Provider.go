@@ -15,20 +15,20 @@
  package DubboController
 
  import(
-	"net"
-	"time"
+	// "net"
+	// "time"
 	"fmt"
-	"net/url"
+	// "net/url"
 	"strings"
-	"runtime"
+	// "runtime"
 	"strconv"
 	. "github.com/xoxo/crm-x/Config"
-	Gin "github.com/gin-gonic/gin"
-	"github.com/xoxo/crm-x/util/logger"
+	// Gin "github.com/gin-gonic/gin"
+	// "github.com/xoxo/crm-x/util/logger"
 	Request "github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Request"
 	Etcd "github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Etcd"
 	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/LoadBalancing"
-	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Protocol"
+	// "github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Protocol"
 
  )
 
@@ -45,9 +45,9 @@ type ProviderAgent struct {
  }
 
 func InitProvider() *ProviderAgent{
-	if Config.Type != "provider"{
-		return
-	}
+	// if Config.Type != "provider"{
+	// 	return 
+	// }
 
 	etcdUrl := Config.EtcdUrl
 	etcdUrl = strings.Replace(Config.EtcdUrl,"http://","",-1)
@@ -56,7 +56,8 @@ func InitProvider() *ProviderAgent{
 		etcdRegistry  : Etcd.NewClient([]string{etcdUrl}),
 	}
 
-	etcdRegistry.Register(rootPath,serviceName,Config.Port)
+	port,_ := strconv.Atoi(Config.Port)
+	agent.etcdRegistry.Register(rootPath,serviceName,port)
 
-	return etcdRegistry
+	return agent
 }

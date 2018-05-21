@@ -17,12 +17,10 @@ import (
 	"time"
 	"log"
 	"fmt"
-	"context"
 	"strings"
 	"strconv"
 	"github.com/xoxo/crm-x/util/logger"
 	. "github.com/xoxo/crm-x/Config"
-	etcd "github.com/coreos/etcd/clientv3"
 	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Etcd/store"
 	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Util"
 )
@@ -133,15 +131,6 @@ func (e *EtcdRegistry)KVPairToEndpoint( KVS []*store.KVPair) []*Util.Endpoint{
 
 
 
-func (e *EtcdRegistry)tests() *EtcdRegistry{
-
-	value := []byte("bar232")
-	e.kv.Put("dubbomesh--",value,nil)
-	k ,_ :=	e.kv.Get("/dubbomesh",nil,true)
-	logger.Info(k[0].Key+"  "+string(k[0].Value[:]))
-	// fmt.Printf(k[0].Key+"  "+string(k[0].Value[:])+"\n")
-	return e
-}
 
 func  getHostIp() string{
 	addrs, err := net.InterfaceAddrs()
@@ -160,20 +149,24 @@ func  getHostIp() string{
 }
 // 向ETCD中注册服务
 func (e *EtcdRegistry) Register(rootPath string,serviceName string, port int)  {
-	
 	strKey := fmt.Sprintf("/%s/%s/{%s}:{%d}",rootPath,serviceName, getHostIp(),port)
 
 	channels := Config.Channels
 	value := []byte(strconv.Itoa(channels))
-	
-	resp, err := e.kv.Client().Grant(context.Background(), 30)
-	if err != nil {
-		log.Fatal(err)
-	}
 
 	 ops := &store.WriteOptions{
 		IsDir :false,
 		TTL   :time.Second*20,
 	 }
 	e.kv.Put(strKey,value,ops,true)
+}
+
+func (e *EtcdRegistry)tests() *EtcdRegistry{
+
+	value := []byte("bar232")
+	e.kv.Put("dubbomesh--",value,nil,false)
+	k ,_ :=	e.kv.Get("/dubbomesh",nil,true)
+	logger.Info(k[0].Key+"  "+string(k[0].Value[:]))
+	// fmt.Printf(k[0].Key+"  "+string(k[0].Value[:])+"\n")
+	return e
 }

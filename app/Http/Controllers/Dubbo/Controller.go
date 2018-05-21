@@ -17,7 +17,7 @@
  import(
 	"net"
 	"time"
-	"fmt"
+	// "fmt"
 	"net/url"
 	"strings"
 	"runtime"
@@ -31,11 +31,11 @@
 	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Protocol"
  )
 
- var (
-	rootPath string = "dubbomesh";
-	serviceName string = "com.alibaba.dubbo.performance.demo.provider.IHelloService"
-	etcdKey string = fmt.Sprintf("/%s/%s",rootPath,serviceName)
-)
+//  var (
+// 	rootPath string = "dubbomesh";
+// 	serviceName string = "com.alibaba.dubbo.performance.demo.provider.IHelloService"
+// 	etcdKey string = fmt.Sprintf("/%s/%s",rootPath,serviceName)
+// )
 
  type BubboAgent struct {
 	superAgent      *Request.SuperHttpClient

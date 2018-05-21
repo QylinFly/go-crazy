@@ -27,8 +27,8 @@ func main() {
 	port := flag.String("Dserver.port", Config.Port, "Listen and Server in Port")
 	etcdUrl := flag.String("Detcd.url", "172.17.0.1:2379", "etcd listen port")
 	logsDir := flag.String("Dlogs.dir", Path.Storage, "logs dir")
-	Channels := flag.String("DChannels", Config.Channels, "Channels num")
-	dubboPort := flag.String("Ddubbo.protocol.port", Config.DubboPort, "Channels num")
+	Channels := flag.Int("DChannels", Config.Channels, "Channels num")
+	dubboPort := flag.Int("Ddubbo.protocol.port", Config.DubboPort, "Channels num")
 	
 	
 	flag.Parse()
@@ -48,16 +48,16 @@ func main() {
 	// init database
 	// InitDB()
 
-	if sType == "consumer"{
+	// if *sType == "consumer"{
 		// init gin engine
 		engine := Gin.New()
 		Route.SetupRouter(engine)
 
 		//startNormal(engine)
 		startGracefulShutdown(engine)
-	}else{
+	// }else{
 
-	}
+	// }
 }
 func startNormal(engine *Gin.Engine)  {
 	// Listen and Server in Config.Port

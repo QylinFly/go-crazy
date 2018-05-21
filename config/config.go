@@ -20,6 +20,8 @@ var Config = struct {
 	Type string `default:"provider"`
 	Channels int `default:"200"`
 
+	DubboPort int `default:"20880"`
+
 	EtcdUrl string `default:"172.17.0.1:2379"`
 
 	DB_CONNECTION string `default:"mysql"`
