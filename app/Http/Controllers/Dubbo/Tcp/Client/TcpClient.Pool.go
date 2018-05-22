@@ -51,7 +51,7 @@ type ConnPool struct {
 	//                             			---conn
 	//                        ---chan *Conn
 	//                            			---conn
-	mapNode   sync.Map // address(IP:Port) -- conns chan *Conn;
+	mapNode   *sync.Map // address(IP:Port) -- conns chan *Conn;
 }
  
 //创建一个连接资源池
@@ -61,7 +61,7 @@ func NewConnPool(factory Factory) (*ConnPool, error) {
         factory:     factory,
         closed:      false,
 	};
-
+	cp.mapNode = new(sync.Map)
     return cp, nil;
 }
 func (cp *ConnPool) GetOrCreateNode(address string) (  conns *sync.Map ) {

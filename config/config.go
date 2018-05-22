@@ -16,6 +16,7 @@
 
 var Config = struct {
 	APPName string `default:"app name"`
+	Mode string `default:"release"` //debug    release
 	Port string `default:"80"`
 	Type string `default:"provider"`
 	Channels int `default:"200"`

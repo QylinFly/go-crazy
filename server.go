@@ -33,6 +33,11 @@ func main() {
 	
 	flag.Parse()
 
+	// DebugMode   string = "debug"
+	// ReleaseMode string = "release"
+	// TestMode    string = "test"
+	Gin.SetMode(Gin.ReleaseMode)
+
 	Config.Port = *port
 	Config.EtcdUrl = *etcdUrl
 	Config.Type = *sType

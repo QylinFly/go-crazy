@@ -248,10 +248,10 @@
 			case event := <-stopCh:
 				// nanosecond 请求耗时
 				latency := time.Since(startTime)
-				latencyInt :=  int(latency.()*10000.0)
+				latencyInt :=  int(latency.Seconds()*10000.0)
 				agent.loadBalancing.RecordResponseInfo(targetUrl,latencyInt)
 
-				logger.Info("内部耗时="+ strconv.Itoa(latencyInt-event)+"   调用耗时="+strconv.Itoa(event) )
+				logger.Debug("内部耗时="+ strconv.Itoa(latencyInt-event)+"   调用耗时="+strconv.Itoa(event) )
 				
 				return
 				

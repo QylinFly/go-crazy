@@ -42,7 +42,12 @@
 	}
 	cfg.EncoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	// level 
-	cfg.Level.SetLevel(zap.DebugLevel)
+	if Config.Mode == "release"{
+		cfg.Level.SetLevel(zap.InfoLevel)
+	}else{
+		cfg.Level.SetLevel(zap.DebugLevel)
+	}
+
 
 	// 建立
 	_logger,err = cfg.Build()
