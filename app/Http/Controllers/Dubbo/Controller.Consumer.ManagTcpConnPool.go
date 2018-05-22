@@ -59,6 +59,7 @@ func (self *BubboAgent) InitTcpConnPool(){
 		tcpClient.OnError(func(err error) {
 			// if !client.Connected {
 			logger.Info("agent.tcpClient.OnError : "+address)
+			self.tcpConnPool.RemoveConn(address,tcpClient)
 		})
 		// var senLeng int = 0
 		tcpClient.OnMessage(func(message []byte) {

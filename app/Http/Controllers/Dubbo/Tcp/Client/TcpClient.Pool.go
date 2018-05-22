@@ -105,7 +105,7 @@ func (cp *ConnPool) Get(address string) (ConnRes, error) {
 }
  
 //连接资源放回池中
-func (cp *ConnPool) RemoveConn(address string,conn *ConnRes)  {
+func (cp *ConnPool) RemoveConn(address string,conn ConnRes)  {
 	mapConns,ok := cp.mapNode.Load(address)
     if !ok {
 		conns := mapConns.(*sync.Map)
