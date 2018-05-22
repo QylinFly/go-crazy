@@ -11,7 +11,7 @@
  *	数值计算参考
  *	https://www.gonum.org/post/intro-to-stats-with-gonum/
  *	一致性哈希
- *	https://github.com/serialx/hashring
+ *	https://github.com/serialx/balancedStrategy
  */
 
  package LoadBalancing
@@ -34,11 +34,10 @@
 type LoadBalancingCtrl struct {
 	weights    map[string]int
 	endpoints  map[string]int
-	hashring 	*WeightedRound.WeightedRound//*hashring.HashRing
+	// 平衡策略
+	balancedStrategy 	*WeightedRound.WeightedRound//*hashring.HashRing
 	responseInfo map[string][]int
 	recordEvents chan RecordStruct
-	
-	// responseInfo map[string][int]
 }
 
 func New(nodes []*Util.Endpoint) *LoadBalancingCtrl {
@@ -57,10 +56,9 @@ func newWithWeights(endpoints map[string]int,weights map[string]int) *LoadBalanc
 		weights		: weights,
 		endpoints	: endpoints,
 		responseInfo: make(map[string][]int),
-		recordEvents: make(chan RecordStruct),
+		recordEvents: make(chan RecordStruct,1024),
 	}
-	loadBalancing.hashring = WeightedRound.NewWithWeights(loadBalancing.weights) //hashring.NewWithWeights(loadBalancing.weights)
-	
+	loadBalancing.balancedStrategy = WeightedRound.NewWithWeights(loadBalancing.weights) //balancedStrategy.NewWithWeights(loadBalancing.weights)
 	return loadBalancing
 }
 
@@ -73,28 +71,21 @@ func (ctrl * LoadBalancingCtrl) Get() string{
 	// uuid := randGenerator()
 	// logger.Info("uuid = "+uuid)
 	// uuid2 := strconv.Itoa( time.Now().Nanosecond()+rand.Int() )
-	node,_ := ctrl.hashring.GetNode("uuid2")
+	node,_ := ctrl.balancedStrategy.GetNode("uuid2")
 	return node
 }
 
 func (ctrl * LoadBalancingCtrl) GetByKey(stringKey string) string{
-
-	node,_ := ctrl.hashring.GetNode(stringKey)
-
+	node,_ := ctrl.balancedStrategy.GetNode(stringKey)
 	return node
 }
 
 func (ctrl * LoadBalancingCtrl) Update(nodes []*Util.Endpoint) *LoadBalancingCtrl{
-
 	weights := make(map[string]int)
-	// endpoints := make(map[string]int)
 	for _, node := range nodes {
 		weights[node.ToString()] = node.Weight()
-		// endpoints[node.ToString()] = node.Weight()
-		// ctrl.hashring.UpdateWeightedNode(node.ToString(),node.Weight())
 	}
-	ctrl.hashring.UpdateWeights(weights)
-
+	ctrl.balancedStrategy.UpdateWeights(weights)
 	return ctrl
 }
 
@@ -119,7 +110,6 @@ func (ctrl *LoadBalancingCtrl)PrintRecordResponseInfo(){
 
 //  响应统计
 func (agent *LoadBalancingCtrl) RecordResponseInfoLoop(){
-	
 	for { // Check for updates
 		select {
 		case event := <- agent.recordEvents:
