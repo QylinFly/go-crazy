@@ -101,13 +101,14 @@ func (self *ProviderAgent) InitTcpClient() {
 
 	logger.Info("in InitTcpClient")
 
-	self.tcpClientProvide  = TcpClient.New(":"+strconv.Itoa(Config.DubboPort))
+	address :="127.0.0.1:"+strconv.Itoa(Config.DubboPort)
+	self.tcpClientProvide  = TcpClient.New(address)
 	self.tcpClientProvide.OnOpen(func() {
-		logger.Info("agent.tcpClient.OnOpen")
+		logger.Info("agent.tcpClient.OnOpen:"+address)
 	})
 	self.tcpClientProvide.OnError(func(err error) {
 		// if !client.Connected {
-		logger.Info("agent.tcpClient.OnError")
+		logger.Info("agent.tcpClient.OnError:"+address)
 	})
 	// var senLeng int = 0
 	
