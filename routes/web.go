@@ -13,7 +13,7 @@
 
  import(
 	Gin "github.com/gin-gonic/gin"
-	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo"
+	// "github.com/xoxo/crm-x/app/Http/Controllers/Dubbo"
 	// "github.com/parnurzeal/gorequest"
 	
  )
@@ -28,7 +28,7 @@
 	 })
 
 
-	_ = DubboController.SetupDubbo(router)
+	
 
 	router.GET("/test", func(c *Gin.Context)  {
 		c.HTML(200, "index.tmpl", Gin.H{

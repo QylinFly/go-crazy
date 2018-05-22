@@ -10,9 +10,10 @@ import (
 	"os/signal"
 	"github.com/jinzhu/configor"
 	Gin "github.com/gin-gonic/gin"
-	"github.com/xoxo/crm-x/routes"
+	// "github.com/xoxo/crm-x/routes"
 	. "github.com/xoxo/crm-x/Config"
 	"github.com/xoxo/crm-x/util/logger"
+	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo"
 )
 
 func main() {
@@ -30,7 +31,6 @@ func main() {
 	Channels := flag.Int("DChannels", Config.Channels, "Channels num")
 	dubboPort := flag.Int("Ddubbo.protocol.port", Config.DubboPort, "Channels num")
 	
-	
 	flag.Parse()
 
 	Config.Port = *port
@@ -47,17 +47,17 @@ func main() {
 
 	// init database
 	// InitDB()
+	DubboController.InitProvider()
 
-	// if *sType == "consumer"{
+	if *sType == "consumer"{
 		// init gin engine
 		engine := Gin.New()
-		Route.SetupRouter(engine)
-
-		//startNormal(engine)
+		_ = DubboController.SetupDubbo(engine)
 		startGracefulShutdown(engine)
-	// }else{
 
-	// }
+	}else{
+		DubboController.InitProvider()
+	}
 }
 func startNormal(engine *Gin.Engine)  {
 	// Listen and Server in Config.Port

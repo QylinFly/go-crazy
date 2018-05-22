@@ -34,7 +34,7 @@ func NewEndpoint(host string,port int,weight int) *Endpoint {
 func (ep * Endpoint) ToString() string{
 
 	port:=strconv.Itoa(ep.port) 
-	return "http://"+ep.host + ":" + port
+	return ep.host + ":" + port
 }
 
 func (ep * Endpoint) Weight() int{

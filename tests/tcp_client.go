@@ -89,21 +89,21 @@ func New(address string) *Connection {
 
 
 func main() {
-	// client := New("10.99.2.116:20880")
-	client := New("127.0.0.1:1234")
+	client := New("10.99.2.116:20880")
+	// client := New("127.0.0.1:1234")
 	
 	
 
 	dubbo := Dubbo.New()
 	client.OnOpen(func() {
-
+		println("agent.tcpClient.OnOpen")
 		var idx int = 0
 		go func() {
 			for idx <10{
 				idx++
 				// println("---" + strconv.Itoa(idx))
 				time.Sleep(time.Millisecond )
-				data := dubbo.GetEncoderData("linfeng")
+				_,data := dubbo.GetEncoderData("linfeng")
 				client.Write(data.Bytes())
 			}
 		}()

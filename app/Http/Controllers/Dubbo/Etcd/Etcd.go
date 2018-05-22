@@ -191,7 +191,7 @@ func (s *EtcdV3) Put(key string, value []byte, opts *store.WriteOptions,keepAliv
 	if opts != nil && opts.TTL > 0 && keepAlive == true {
 		s.KeepAlive(leaseId)
 	}
-
+	
 	return nil
 }
 

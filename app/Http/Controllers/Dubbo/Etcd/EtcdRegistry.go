@@ -149,14 +149,14 @@ func  getHostIp() string{
 }
 // 向ETCD中注册服务
 func (e *EtcdRegistry) Register(rootPath string,serviceName string, port int)  {
-	strKey := fmt.Sprintf("/%s/%s/{%s}:{%d}",rootPath,serviceName, getHostIp(),port)
+	strKey := fmt.Sprintf("/%s/%s/%s:%d",rootPath,serviceName, getHostIp(),port)
 
 	channels := Config.Channels
 	value := []byte(strconv.Itoa(channels))
 
 	 ops := &store.WriteOptions{
 		IsDir :false,
-		TTL   :time.Second*20,
+		TTL   :time.Second*10,
 	 }
 	e.kv.Put(strKey,value,ops,true)
 }

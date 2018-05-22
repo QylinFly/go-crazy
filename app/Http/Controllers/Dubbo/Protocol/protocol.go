@@ -1,15 +1,11 @@
 package Dubbo
 
 import (
-//   "io"	
-  "fmt"
-//   "math"
   "strconv"
-//   "errors"
   "encoding/binary"
   "bytes"
-//   "time"
-//  "github.com/xoxo/crm-x/util/logger"
+"github.com/xoxo/crm-x/util/logger"
+ "sync/atomic"
 )
 
 const (
@@ -77,7 +73,7 @@ const (
 type DubboRpcEncoder struct{
 	buf  	*bytes.Buffer
 	header 	*bytes.Buffer
-	reqId 	int64
+	reqId 	uint64
 }
 
 func New() *DubboRpcEncoder{
@@ -109,11 +105,10 @@ func (dubbo * DubboRpcEncoder) InitHeader() *DubboRpcEncoder{
 */
 
 // String interfaceName, String method, String parameterTypesString, String parameter
-func (dubbo * DubboRpcEncoder) GetEncoderData(parameter string) *bytes.Buffer{
+func (dubbo * DubboRpcEncoder) GetEncoderData(parameter string) (uint64,*bytes.Buffer){
 
 	body := new(bytes.Buffer)
 	data := new(bytes.Buffer)
-
 
 	data.WriteString("\"2.0.1\"\n")
 	data.WriteString("\"com.alibaba.dubbo.performance.demo.provider.IHelloService\"\n")
@@ -123,14 +118,14 @@ func (dubbo * DubboRpcEncoder) GetEncoderData(parameter string) *bytes.Buffer{
 	data.WriteString("\"" + parameter + "\"\n")
 	data.WriteString("{\"path\":\"com.alibaba.dubbo.performance.demo.provider.IHelloService\"}\n")
 	
-	dubbo.reqId ++
+	reqId :=atomic.AddUint64(&dubbo.reqId,1)
 	length := data.Len()
 	body.Write(dubbo.header.Bytes())
-	binary.Write(body, binary.BigEndian, dubbo.reqId)
+	binary.Write(body, binary.BigEndian, reqId)
 	binary.Write(body, binary.BigEndian, int32(length))
 
 	body.Write(data.Bytes())
-	return body
+	return reqId,body
 }
 
 //  返回解析结构体
@@ -147,60 +142,70 @@ func (res* RpcResponse)Data() *[]byte{
 }
 
 
-func  GetDecoderData(data *[]byte,res []*RpcResponse) (v []*RpcResponse, errstr string){
-	len := len(*data)
+func  GetDecoderData(data *[]byte,res []*RpcResponse) (v []*RpcResponse, errstr string, last *[]byte){
 
-	if (len < HEADER_LENGTH) {
-		return res, "数据字段长度小于头部最小长度16"
+	for {
+		len := len(*data)
+			
+		if (len < 2) {
+			return res, "数据字段长度小于2错误",data
+		}
+
+		dubboByte :=  (*data)[0:2]
+		dubbo := binary.BigEndian.Uint16(dubboByte)
+		if dubbo != MAGIC{
+			return res, "头部校验失败！",data
+		}
+
+		if (len < HEADER_LENGTH) {
+			return res, "数据字段长度小于头部最小长度16",data
+		}
+
+		statusByte := (*data)[3]
+		status := int8(statusByte)
+		if status != 20{
+			// 20 - OK
+			// 30 - CLIENT_TIMEOUT
+			// 31 - SERVER_TIMEOUT
+			// 40 - BAD_REQUEST
+			// 50 - BAD_RESPONSE
+			// 60 - SERVICE_NOT_FOUND
+			// 70 - SERVICE_ERROR
+			// 80 - SERVER_ERROR
+			// 90 - CLIENT_ERROR
+			// 100 - SERVER_THREADPOOL_EXHAUSTED_ERROR
+			logger.Info("数据状态异常 code="+ strconv.Itoa(int(status)))
+			// return res, "数据状态异常 code="+ strconv.Itoa(int(status)),nil
+		}
+		
+		dataLenByte :=  (*data)[12:16] 
+		dataLen :=binary.BigEndian.Uint32(dataLenByte)
+		tt := int(dataLen) + HEADER_LENGTH
+		if (len < tt) {
+			return res, "头部加数据小于数据长度",data
+		}
+
+		if status == 20{
+			requestIdBytes := (*data)[4:12]
+			requestId :=binary.BigEndian.Uint64(requestIdBytes)
+		
+			rpcResponse := &RpcResponse{
+				requestId : requestId,
+				bytes : (*data)[HEADER_LENGTH+2:tt-1] ,
+			}
+			res = append(res,rpcResponse)
+		}
+
+		if (len > tt) {
+			// return res, "严重错误，可能粘包了"
+			dd := (*data)[tt:len]
+			data = &dd
+			// return GetDecoderData(&dd,res)
+		}else{
+			return res, "",nil
+		}
+
 	}
-
-	dubboByte :=  (*data)[0:2]
-	dubbo := binary.BigEndian.Uint16(dubboByte)
-	if dubbo != MAGIC{
-		fmt.Println(string(*data))
-		return res, "头部校验失败！"
-	}
-
-	statusByte := (*data)[3]
-	status := int8(statusByte)
-	if status != 20{
-		// 20 - OK
-		// 30 - CLIENT_TIMEOUT
-		// 31 - SERVER_TIMEOUT
-		// 40 - BAD_REQUEST
-		// 50 - BAD_RESPONSE
-		// 60 - SERVICE_NOT_FOUND
-		// 70 - SERVICE_ERROR
-		// 80 - SERVER_ERROR
-		// 90 - CLIENT_ERROR
-		// 100 - SERVER_THREADPOOL_EXHAUSTED_ERROR
-		return res, "数据状态异常 code="+ strconv.Itoa(int(status))
-	}
-	
-	dataLenByte :=  (*data)[12:16] 
-	dataLen :=binary.BigEndian.Uint32(dataLenByte)
-	tt := int(dataLen) + HEADER_LENGTH
-	if (len < tt) {
-		return res, "头部加数据小于数据长度"
-	}
-
-	requestIdBytes := (*data)[4:12]
-	requestId :=binary.BigEndian.Uint64(requestIdBytes)
-
-	rpcResponse := &RpcResponse{
-		requestId : requestId,
-		bytes : (*data)[HEADER_LENGTH+2:tt-1] ,
-	}
-
-	if (len > tt) {
-		// return res, "严重错误，可能粘包了"
-		dd := (*data)[tt:len]
-		return GetDecoderData(&dd,res)
-	}
-
-	res = append(res,rpcResponse)
-
-	return res, ""
 }
 
 

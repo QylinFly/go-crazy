@@ -37,4 +37,12 @@ var Config = struct {
 		Name  string
 		Email string `required:"true"`
 	}
+
+	Time struct {
+		T1 int64 `default:"0"`
+		T2 int64 `default:"0"`
+		T3 int64 `default:"0"`
+		T4 int64 `default:"0"`
+	}
+
 }{}

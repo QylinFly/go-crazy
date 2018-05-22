@@ -17,10 +17,12 @@
  import(
 	"net"
 	"time"
-	// "fmt"
+	"fmt"
+	"sync"
 	"net/url"
 	"strings"
-	"runtime"
+	"bytes"
+	// "runtime"
 	"strconv"
 	. "github.com/xoxo/crm-x/Config"
 	Gin "github.com/gin-gonic/gin"
@@ -29,19 +31,24 @@
 	Etcd "github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Etcd"
 	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/LoadBalancing"
 	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Protocol"
+	"github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Tcp/Client"
  )
 
-//  var (
-// 	rootPath string = "dubbomesh";
-// 	serviceName string = "com.alibaba.dubbo.performance.demo.provider.IHelloService"
-// 	etcdKey string = fmt.Sprintf("/%s/%s",rootPath,serviceName)
-// )
+ var (
+	rootPath string = "dubbomesh";
+	serviceName string = "com.alibaba.dubbo.performance.demo.provider.IHelloService"
+	etcdKey string = fmt.Sprintf("/%s/%s",rootPath,serviceName)
+)
 
  type BubboAgent struct {
 	superAgent      *Request.SuperHttpClient
 	etcdRegistry   	*Etcd.EtcdRegistry
 	loadBalancing   *LoadBalancing.LoadBalancingCtrl
+	rpcEncoder		*Dubbo.DubboRpcEncoder
+	tcpConnPool  	*TcpClient.ConnPool
+	    mapReq      sync.Map // reqID -- chan string
  }
+
 
  func SetupDubbo(router *Gin.Engine) *BubboAgent {
 
@@ -54,19 +61,22 @@
 		superAgent    : Request.NewClient(),
 		etcdRegistry  : Etcd.NewClient([]string{etcdUrl}),
 		loadBalancing : nil,
+		rpcEncoder    : Dubbo.New(),
 	}
 
 	// 节点发现和负载均衡初始化
 	endpoints := agent.etcdRegistry.Find(etcdKey)
 	agent.loadBalancing = LoadBalancing.New(endpoints)
 
+	agent.InitTcpConnPool()
+
 	go agent.EndPointWatch()
 	go agent.loadBalancing.RecordResponseInfoLoop()
 
-	agent.InitAgent()
+	// agent.InitAgent()
 	
-	router.GET("/", agent.PingV1)
-	router.POST("/", agent.PingV1)
+	router.GET("/", agent.Ping)
+	router.POST("/", agent.Ping)
 
 	router.GET("/info", agent.PrintInfo)
 	
@@ -75,6 +85,63 @@
 	return agent
  }
 
+ 
+ func (self *BubboAgent) InitTcpConnPool(){
+	
+	self.tcpConnPool, _ = TcpClient.NewConnPool(func(address string) (TcpClient.ConnRes, error) {
+		
+		tcpClient  := TcpClient.New(address)//10.99.2.116:20880 or ":18080"
+
+		tcpClient.OnOpen(func() {
+			logger.Info("agent.tcpClient.OnOpen : "+address)
+		})
+		tcpClient.OnError(func(err error) {
+			// if !client.Connected {
+			logger.Info("agent.tcpClient.OnError : "+address)
+		})
+		// var senLeng int = 0
+		tcpClient.OnMessage(func(message []byte) {
+			if len(message) == 0 {
+				tcpClient.Write(message)
+				return
+			}
+			// senLeng+=len(message)
+			// logger.Info("Agent接收"+strconv.Itoa(senLeng))
+
+			rpcResponseArray := []*Dubbo.RpcResponse{}
+			res,err,data:= Dubbo.GetDecoderData(&message,rpcResponseArray)
+			
+			for _, ev := range res {
+				stopCh,ok := self.mapReq.Load(ev.ID())
+				
+				if !ok{
+					time.Sleep(time.Millisecond)
+					stopCh,ok = self.mapReq.Load(ev.ID())
+				}
+				if ok {
+					stopCh2 := stopCh.(chan string)
+					if stopCh2 !=nil{
+						stopCh2 <- string(*ev.Data())
+					}
+				}else{
+					logger.Error("Menssage agent.mapReq.Load error : " +strconv.FormatUint(ev.ID(),10)+"---"+ string(*ev.Data()))
+				}
+				// println("Menssage : " +strconv.FormatUint(ev.ID(),10)+"---"+ string(*ev.Data()))
+			}
+			if data != nil{
+				tcpClient.SetLast(data)
+			}
+			if err != ""{
+				logger.Debug("Menssage error: " + err)
+			}
+		})
+		//  链接运行
+		go tcpClient.Connect()
+		time.Sleep(time.Millisecond)
+
+        return tcpClient,nil
+ 	})
+}
 //  服务发现逻辑
  func (agent *BubboAgent) EndPointWatch(){
 	events, err := agent.etcdRegistry.WatchTree("/"+rootPath)
@@ -123,6 +190,7 @@
 	return agent.loadBalancing.Get()
  }
 
+//  获取编码后数据包
  func (agent *BubboAgent) getParam(c *Gin.Context, key string) string{
 	value := c.PostForm(key)
 	if value == "" { 
@@ -136,7 +204,70 @@
 	agent.loadBalancing.PrintRecordResponseInfo()
  }
 
+ var maxClient = make(chan byte,200)
+
+
+ func (agent *BubboAgent) GetEncoderDataByContext(c *Gin.Context ) (uint64,*bytes.Buffer) {
+	// Ping test
+	// request := agent.superAgent;
+
+	// inter := agent.getParam(c, "interface")
+	// method:= agent.getParam(c, "method")
+	// parameterTypesString:= agent.getParam(c, "parameterTypesString")
+	parameter:= agent.getParam(c, "parameter")
+	
+	// args := "interface="+inter+"&method="+method+"&parameterTypesString="+parameterTypesString+"&parameter="+parameter
+
+	// logger.Info(args)
+	
+	// targetUrl := agent.GetEndpoint()
+
+	return agent.rpcEncoder.GetEncoderData(parameter)
+ }
+
  func (agent *BubboAgent) Ping(c *Gin.Context )  {
+
+	Config.Time.T1 = time.Now().UnixNano()
+	
+	reqId,data := agent.GetEncoderDataByContext(c)
+
+	maxClient <- 1
+	
+	targetUrl := agent.GetEndpoint()
+	
+	tcpClientT,_ := agent.tcpConnPool.Get(targetUrl) // ":18080"
+	
+	tcpClient := tcpClientT.(*TcpClient.Connection)
+
+	if tcpClient.Connected{
+		tcpClient.Write(data.Bytes())
+	}else{
+		logger.Error("agent.tcpClient.Connected == false")
+	}
+
+	stopCh :=  make(chan string)
+
+	agent.mapReq.Store(reqId,stopCh)
+
+	time.Sleep(time.Millisecond*40)
+	for { // Check for updates
+		select {
+		case hash := <-stopCh:
+			c.String(200,hash)
+			agent.mapReq.Delete(reqId)
+			Config.Time.T4 = time.Now().UnixNano()
+			<- maxClient
+			logger.AppendDebug("########## agent = ",(Config.Time.T2-Config.Time.T1)/10000.0,(Config.Time.T4-Config.Time.T3)/10000.0," provide = ",(Config.Time.T3-Config.Time.T2)/10000.0) 
+			return
+		case <-time.After(5000 * time.Millisecond):
+			logger.Info("超时返回了！"+strconv.FormatUint(reqId,10))
+			agent.mapReq.Delete(reqId)
+			<- maxClient
+			return
+		}
+	}
+ }
+ func (agent *BubboAgent) PingV2(c *Gin.Context )  {
 
 	// Ping test
 	request := agent.superAgent;
@@ -178,42 +309,5 @@
  	}else{
 		 logger.Info("EndPool return error!")
 	 }
-
- }
-
- func (agent *BubboAgent) PingV1(c *Gin.Context )  {
-
-	request := agent.superAgent;
-
-	inter := agent.getParam(c, "interface")
-	method:= agent.getParam(c, "method")
-	parameterTypesString:= agent.getParam(c, "parameterTypesString")
-	parameter:= agent.getParam(c, "parameter")
-	
-	args := "interface="+inter+"&method="+method+"&parameterTypesString="+parameterTypesString+"&parameter="+parameter
-
-
-	startTime := time.Now()
-
-	targetUrl := agent.GetEndpoint()
-
-
-	_, body, _ := request.Post(targetUrl).
-	// _, body, _ := request.Post("http://10.99.2.116:30000").
-	// Send("interface=com.alibaba.dubbo.performance.demo.provider.IHelloService&method=hash&parameterTypesString=Ljava%2Flang%2FString%3B&parameter=wdeadsadasdadadadasdasdasdasdasdffgfjffhgfgfddfggfd").
-	Type("urlencoded").
-	Send(args).
-	End()
-
-	c.String(200,body)
-
-	// nanosecond 请求耗时
-	latency := time.Since(startTime)
-
-	latencyInt :=  int(latency.Nanoseconds()/100000.0)
-
-	agent.loadBalancing.RecordResponseInfo(targetUrl,latencyInt)
-
-	logger.Info("------------"+ strconv.Itoa(runtime.NumGoroutine())+"    "+strconv.Itoa(latencyInt) )
 
  }
