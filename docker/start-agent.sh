@@ -48,7 +48,7 @@ elif [[ "$1" == "provider-medium" ]]; then
   echo "Starting medium provider agent..."
 
     cd /root/workspace/agent/
-    ./server.exe -Dtype=provider -Ddubbo.protocol.port=20880 -DChannels=100 -Dserver.port=30000  -Detcd.url=$ETCD_URL  -Dlogs.dir=/root/logs 
+    ./server.exe -Dtype=provider -Ddubbo.protocol.port=20880 -DChannels=100 -Dserver.port=30001  -Detcd.url=$ETCD_URL  -Dlogs.dir=/root/logs 
 
   # java -jar \
   #      -Xms1536M \
@@ -66,7 +66,7 @@ elif [[ "$1" == "provider-medium" ]]; then
 elif [[ "$1" == "provider-large" ]]; then
   echo "Starting large provider agent..."
     cd /root/workspace/agent/
-    ./server.exe -Dtype=provider -Ddubbo.protocol.port=20880 -DChannels=180 -Dserver.port=30000  -Detcd.url=$ETCD_URL  -Dlogs.dir=/root/logs 
+    ./server.exe -Dtype=provider -Ddubbo.protocol.port=20880 -DChannels=180 -Dserver.port=30002  -Detcd.url=$ETCD_URL  -Dlogs.dir=/root/logs 
 
 
   # java -jar \
