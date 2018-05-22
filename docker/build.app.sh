@@ -8,6 +8,6 @@ CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./docker/server.exe .
 
 cd ./docker
 
-git commit -a''
+git commit -a'' -m"编译提交"
 git push
 
