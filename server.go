@@ -24,7 +24,7 @@ func main() {
 	// init path
 	InitPath()
 
-	sType := flag.String("Dtype", "consumer", "service type consumer")
+	sType := flag.String("Dtype", "provider", "service type consumer")
 	port := flag.String("Dserver.port", Config.Port, "Listen and Server in Port")
 	etcdUrl := flag.String("Detcd.url", "172.17.0.1:2379", "etcd listen port")
 	logsDir := flag.String("Dlogs.dir", Path.Storage, "logs dir")

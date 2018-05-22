@@ -23,7 +23,6 @@
 	// "runtime"
 	"strconv"
 	. "github.com/xoxo/crm-x/Config"
-	// Gin "github.com/gin-gonic/gin"
 	"github.com/xoxo/crm-x/util/logger"
 	Request "github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Request"
 	Etcd "github.com/xoxo/crm-x/app/Http/Controllers/Dubbo/Etcd"
@@ -69,7 +68,7 @@ func (self *ProviderAgent) InitTcpServer() {
 
 	logger.Info("in InitTcpServer")
 	
-	server := TcpServer.New(":1" + Config.Port)
+	server := TcpServer.New(":" + Config.Port)
 
 	server.OnNewClient(func(c *TcpServer.Client) {
 		// new client connected
@@ -102,7 +101,7 @@ func (self *ProviderAgent) InitTcpClient() {
 
 	logger.Info("in InitTcpClient")
 
-	self.tcpClientProvide  = TcpClient.New("10.99.2.116:20880")
+	self.tcpClientProvide  = TcpClient.New(":"+strconv.Itoa(Config.DubboPort))
 	self.tcpClientProvide.OnOpen(func() {
 		logger.Info("agent.tcpClient.OnOpen")
 	})
