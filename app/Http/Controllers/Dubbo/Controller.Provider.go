@@ -66,7 +66,7 @@ func InitProvider() {
 
 func (self *ProviderAgent) InitTcpServer() {
 
-	logger.Info("in InitTcpServer")
+	logger.Info("in InitTcpServer :" + Config.Port)
 	
 	server := TcpServer.New(":" + Config.Port)
 
@@ -99,9 +99,9 @@ func (self *ProviderAgent) InitTcpServer() {
 
 func (self *ProviderAgent) InitTcpClient() {
 
-	logger.Info("in InitTcpClient")
-
 	address :="127.0.0.1:"+strconv.Itoa(Config.DubboPort)
+	logger.Info("in InitTcpClient :"+ address)
+	
 	self.tcpClientProvide  = TcpClient.New(address)
 	self.tcpClientProvide.OnOpen(func() {
 		logger.Info("agent.tcpClient.OnOpen:"+address)
