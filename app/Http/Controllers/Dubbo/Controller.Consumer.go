@@ -177,15 +177,20 @@
 		return
 	}
 	
-	tcpClientT,_ := agent.tcpConnPool.Get(targetUrl) // ":18080"
+	for index := 0; index < 10; index++ {
+		tcpClientT,_ := agent.tcpConnPool.Get(targetUrl) // ":18080"
 	
-	tcpClient := tcpClientT.(*TcpClient.Connection)
-
-	if tcpClient.Connected{
-		tcpClient.Write(data.Bytes())
-	}else{
-		logger.Error("agent.tcpClient.Connected == false")
+		tcpClient := tcpClientT.(*TcpClient.Connection)
+	
+		if tcpClient.Connected{
+			tcpClient.Write(data.Bytes())
+			break
+		}else{
+			logger.Error("agent.tcpClient.Connected == false")
+			time.Sleep(time.Millisecond*10)
+		}
 	}
+
 
 	stopCh :=  make(chan string)
 
