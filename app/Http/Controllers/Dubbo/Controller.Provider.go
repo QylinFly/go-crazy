@@ -109,6 +109,7 @@ func (self *ProviderAgent) InitTcpClient() {
 	self.tcpClientProvide.OnError(func(err error) {
 		// if !client.Connected {
 		logger.Info("agent.tcpClient.OnError:"+address)
+		self.InitTcpClient()
 	})
 	// var senLeng int = 0
 	
