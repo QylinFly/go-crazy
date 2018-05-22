@@ -141,7 +141,7 @@
 	agent.loadBalancing.PrintRecordResponseInfo()
  }
 
- var maxClient = make(chan byte,200)
+ var maxClient = make(chan byte,270)
 
 
  func (agent *BubboAgent) GetEncoderDataByContext(c *Gin.Context ) (uint64,*bytes.Buffer) {
