@@ -164,6 +164,8 @@
 
  func (agent *BubboAgent) Ping(c *Gin.Context )  {
 
+	startTime := time.Now()
+	
 	Config.Time.T1 = time.Now().UnixNano()
 	
 	reqId,data := agent.GetEncoderDataByContext(c)
@@ -204,6 +206,10 @@
 			agent.mapReq.Delete(reqId)
 			Config.Time.T4 = time.Now().UnixNano()
 			<- maxClient
+			latency := time.Since(startTime)
+			latencyInt :=  int(latency.Seconds()*10000.0)
+			agent.loadBalancing.RecordResponseInfo(targetUrl,latencyInt)
+
 			logger.AppendDebug("########## agent = ",(Config.Time.T2-Config.Time.T1)/10000.0,(Config.Time.T4-Config.Time.T3)/10000.0," provide = ",(Config.Time.T3-Config.Time.T2)/10000.0) 
 			return
 		case <-time.After(5000 * time.Millisecond):
@@ -242,7 +248,7 @@
 			case event := <-stopCh:
 				// nanosecond 请求耗时
 				latency := time.Since(startTime)
-				latencyInt :=  int(latency.Seconds()*10000.0)
+				latencyInt :=  int(latency.()*10000.0)
 				agent.loadBalancing.RecordResponseInfo(targetUrl,latencyInt)
 
 				logger.Info("内部耗时="+ strconv.Itoa(latencyInt-event)+"   调用耗时="+strconv.Itoa(event) )
