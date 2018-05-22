@@ -49,6 +49,10 @@ func (h *WeightedRound) UpdateWeights(weights map[string]int) *WeightedRound {
 func (h *WeightedRound) GetNode(stringKey string) (node string, ok bool) {
 	stringKey = ""
 
+	if len(h.slaveHosts) == 0{
+		return "" , false
+	}
+
 	defer h.mutex.Unlock()
 	h.mutex.Lock()
 
