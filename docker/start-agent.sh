@@ -29,7 +29,7 @@ elif [[ "$1" == "provider-small" ]]; then
   echo "Starting small provider agent..."
 
     cd /root/workspace/agent/
-    ./server.exe -Dtype=consumer -Ddubbo.protocol.port=20880 -DChannels=50 -Dserver.port=30000  -Detcd.url=$ETCD_URL  -Dlogs.dir=/root/logs 
+    ./server.exe -Dtype=provider -Ddubbo.protocol.port=20880 -DChannels=50 -Dserver.port=30000  -Detcd.url=$ETCD_URL  -Dlogs.dir=/root/logs 
 
   # java -jar \
   #      -Xms512M \
