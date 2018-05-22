@@ -171,6 +171,11 @@
 	maxClient <- 1
 	
 	targetUrl := agent.GetEndpoint()
+
+	if targetUrl=="" {
+		logger.Warn("无可用服务节点！")
+		return
+	}
 	
 	tcpClientT,_ := agent.tcpConnPool.Get(targetUrl) // ":18080"
 	
