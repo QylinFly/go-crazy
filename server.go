@@ -47,7 +47,7 @@ func main() {
 
 	// init database
 	// InitDB()
-	DubboController.InitProvider()
+	// DubboController.InitProvider()
 
 	if *sType == "consumer"{
 		// init gin engine

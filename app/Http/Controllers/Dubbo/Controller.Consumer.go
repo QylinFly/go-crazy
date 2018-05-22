@@ -10,8 +10,6 @@
  * Copyright 2017 - 2027
  */
 
-
-
  package DubboController
 
  import(
@@ -22,7 +20,6 @@
 	"net/url"
 	"strings"
 	"bytes"
-	// "runtime"
 	"strconv"
 	. "github.com/xoxo/crm-x/Config"
 	Gin "github.com/gin-gonic/gin"
@@ -51,7 +48,6 @@
 
 
  func SetupDubbo(router *Gin.Engine) *BubboAgent {
-
 	logger.Info("Init SetupDubbo")
 
 	etcdUrl := Config.EtcdUrl
@@ -64,95 +60,37 @@
 		rpcEncoder    : Dubbo.New(),
 	}
 
+	agent.InitTcpConnPool()
+	
 	// 节点发现和负载均衡初始化
 	endpoints := agent.etcdRegistry.Find(etcdKey)
+	agent.UpdateTcpConnPool(endpoints)
 	agent.loadBalancing = LoadBalancing.New(endpoints)
-
-	agent.InitTcpConnPool()
 
 	go agent.EndPointWatch()
 	go agent.loadBalancing.RecordResponseInfoLoop()
 
 	// agent.InitAgent()
-	
 	router.GET("/", agent.Ping)
 	router.POST("/", agent.Ping)
-
 	router.GET("/info", agent.PrintInfo)
-	
 	Dubbo.New().InitHeader()
 
 	return agent
  }
 
- 
- func (self *BubboAgent) InitTcpConnPool(){
-	
-	self.tcpConnPool, _ = TcpClient.NewConnPool(func(address string) (TcpClient.ConnRes, error) {
-		
-		tcpClient  := TcpClient.New(address)//10.99.2.116:20880 or ":18080"
 
-		tcpClient.OnOpen(func() {
-			logger.Info("agent.tcpClient.OnOpen : "+address)
-		})
-		tcpClient.OnError(func(err error) {
-			// if !client.Connected {
-			logger.Info("agent.tcpClient.OnError : "+address)
-		})
-		// var senLeng int = 0
-		tcpClient.OnMessage(func(message []byte) {
-			if len(message) == 0 {
-				tcpClient.Write(message)
-				return
-			}
-			// senLeng+=len(message)
-			// logger.Info("Agent接收"+strconv.Itoa(senLeng))
-
-			rpcResponseArray := []*Dubbo.RpcResponse{}
-			res,err,data:= Dubbo.GetDecoderData(&message,rpcResponseArray)
-			
-			for _, ev := range res {
-				stopCh,ok := self.mapReq.Load(ev.ID())
-				
-				if !ok{
-					time.Sleep(time.Millisecond)
-					stopCh,ok = self.mapReq.Load(ev.ID())
-				}
-				if ok {
-					stopCh2 := stopCh.(chan string)
-					if stopCh2 !=nil{
-						stopCh2 <- string(*ev.Data())
-					}
-				}else{
-					logger.Error("Menssage agent.mapReq.Load error : " +strconv.FormatUint(ev.ID(),10)+"---"+ string(*ev.Data()))
-				}
-				// println("Menssage : " +strconv.FormatUint(ev.ID(),10)+"---"+ string(*ev.Data()))
-			}
-			if data != nil{
-				tcpClient.SetLast(data)
-			}
-			if err != ""{
-				logger.Debug("Menssage error: " + err)
-			}
-		})
-		//  链接运行
-		go tcpClient.Connect()
-		time.Sleep(time.Millisecond)
-
-        return tcpClient,nil
- 	})
-}
 //  服务发现逻辑
  func (agent *BubboAgent) EndPointWatch(){
 	events, err := agent.etcdRegistry.WatchTree("/"+rootPath)
 	if err == nil{
 		for { // Check for updates
 			select {
-			case event := <-events:
-				logger.Info("EtcdRegistry WatchTree Events >>"+event[0].Key)
-				endpoints := agent.etcdRegistry.Find(etcdKey)
-				// endpoints := agent.etcdRegistry.KVPairToEndpoint(event)
-				agent.loadBalancing.Update(endpoints)
+				case event := <-events:
+					logger.Info("EtcdRegistry WatchTree Events >>"+event[0].Key)
+					endpoints := agent.etcdRegistry.Find(etcdKey)
+					agent.UpdateTcpConnPool(endpoints)
+					agent.loadBalancing.Update(endpoints)
 			}
 		}
  	}else{
@@ -183,7 +121,6 @@
 	}
 
 	agent.superAgent.InitPool()
-
  }
 
  func (agent *BubboAgent) GetEndpoint()  string{

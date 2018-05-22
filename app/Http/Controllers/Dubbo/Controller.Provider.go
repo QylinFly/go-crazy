@@ -46,7 +46,7 @@ type ProviderAgent struct {
 	tcpClientProvide *TcpClient.Connection	
  }
 
-func InitProvider() *ProviderAgent{
+func InitProvider() {
 
 	logger.Info("in InitProvider")
 
@@ -61,10 +61,8 @@ func InitProvider() *ProviderAgent{
 	port,_ := strconv.Atoi(Config.Port)
 	agent.etcdRegistry.Register(rootPath,serviceName,port)
 
-	agent.InitTcpServer()
 	agent.InitTcpClient()
-
-	return agent
+	agent.InitTcpServer()
 }
 
 func (self *ProviderAgent) InitTcpServer() {
@@ -96,7 +94,8 @@ func (self *ProviderAgent) InitTcpServer() {
 		logger.Info("connection with client lost")
 		delete(self.tcpClientAgent, c)
 	})
-	go server.Listen()
+	
+	server.Listen()
 }
 
 func (self *ProviderAgent) InitTcpClient() {

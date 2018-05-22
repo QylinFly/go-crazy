@@ -130,8 +130,6 @@ func (e *EtcdRegistry)KVPairToEndpoint( KVS []*store.KVPair) []*Util.Endpoint{
 }
 
 
-
-
 func  getHostIp() string{
 	addrs, err := net.InterfaceAddrs()
     if err != nil {
