@@ -186,7 +186,7 @@
 			tcpClient.Write(data.Bytes())
 			break
 		}else{
-			logger.Error("agent.tcpClient.Connected == false")
+			logger.Warn("agent.tcpClient.Connected == false")
 			time.Sleep(time.Millisecond*10)
 		}
 	}
